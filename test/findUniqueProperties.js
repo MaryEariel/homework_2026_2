@@ -60,4 +60,66 @@ QUnit.module("Тестируем функцию findUniqueProperties", function(
             "Оба объекта пустые — вернуть пустой объект."
         );
     });
+
+    QUnit.test("Бросает TypeError при неправильных типах аргументов", function(assert) {
+        assert.throws(
+            () => findUniqueProperties(null, {}),
+            TypeError,
+            "null как первый аргумент"
+        );
+        assert.throws(
+            () => findUniqueProperties({}, undefined),
+            TypeError,
+            "undefined как второй аргумент"
+        );
+        assert.throws(
+            () => findUniqueProperties([1, 2], {}),
+            TypeError,
+            "массив как первый аргумент"
+        );
+        assert.throws(
+            () => findUniqueProperties({}, 'строка'),
+            TypeError,
+            "строка как второй аргумент"
+        );
+        assert.throws(
+            () => findUniqueProperties(42, {}),
+            TypeError,
+            "число как первый аргумент"
+        );
+    });
+
+    QUnit.test("Работает с вложенными объектами и глубоко копирует значения", function(assert) {
+        const firstObject = { a: { nested: { value: 1 } }, b: 2 };
+        const secondObject = { c: { nested: { value: 3 } } };
+
+        const result = findUniqueProperties(firstObject, secondObject);
+
+        assert.deepEqual(
+            result,
+            { a: { nested: { value: 1 } }, b: 2, c: { nested: { value: 3 } } },
+            "Вложенные объекты должны корректно попасть в результат."
+        );
+
+        result.a.nested.value = 999;
+
+        assert.strictEqual(
+            firstObject.a.nested.value,
+            1,
+            "Изменение результата не должно влиять на исходный объект (глубокое копирование)."
+        );
+    });
+
+    QUnit.test("Работает с полностью разными свойствами у объектов", function(assert) {
+        const result = findUniqueProperties(
+            { a: 1, b: 2 },
+            { c: 3, d: 4 }
+        );
+
+        assert.deepEqual(
+            result,
+            { a: 1, b: 2, c: 3, d: 4 },
+            "Если свойства не пересекаются, все они должны попасть в результат."
+        );
+    });
 });
