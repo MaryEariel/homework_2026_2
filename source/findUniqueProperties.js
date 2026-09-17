@@ -2,18 +2,15 @@
 
 /**
  * Проверяет, является ли значение обычным объектом:
- * не null, не массив, не Set/Map/Date/RegExp и т.п.
+ * прототип должен быть Object.prototype.
  *
  * @param {*} value - проверяемое значение.
  * @returns {boolean} true, если значение — обычный объект.
  */
-const isPlainObject = (value) => {
-    if (typeof value !== 'object' || value === null) {
-        return false;
-    }
-    const proto = Object.getPrototypeOf(value);
-    return proto === Object.prototype || proto === null;
-};
+const isPlainObject = (value) =>
+    value !== null &&
+    typeof value === 'object' &&
+    Object.getPrototypeOf(value) === Object.prototype;
 
 /**
  * Делает поверхностную копию значения, если это объект или массив.
