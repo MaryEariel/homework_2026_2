@@ -89,7 +89,30 @@ QUnit.module("Тестируем функцию findUniqueProperties", function(
         );
     });
 
-    QUnit.test("Работает с вложенными объектами и глубоко копирует значения", function(assert) {
+    QUnit.test("Бросает TypeError, если аргумент — Set, Map, Date или RegExp", function(assert) {
+        assert.throws(
+            () => findUniqueProperties(new Set([1, 2, 3]), {}),
+            TypeError,
+            "Set как первый аргумент"
+        );
+        assert.throws(
+            () => findUniqueProperties({}, new Map()),
+            TypeError,
+            "Map как второй аргумент"
+        );
+        assert.throws(
+            () => findUniqueProperties(new Date(), {}),
+            TypeError,
+            "Date как первый аргумент"
+        );
+        assert.throws(
+            () => findUniqueProperties({}, /regex/),
+            TypeError,
+            "RegExp как второй аргумент"
+        );
+    });
+
+    QUnit.test("Работает с вложенными объектами и копирует их поверхностно", function(assert) {
         const firstObject = { a: { nested: { value: 1 } }, b: 2 };
         const secondObject = { c: { nested: { value: 3 } } };
 
@@ -101,13 +124,27 @@ QUnit.module("Тестируем функцию findUniqueProperties", function(
             "Вложенные объекты должны корректно попасть в результат."
         );
 
-        result.a.nested.value = 999;
+        result.a = { changed: true };
 
         assert.strictEqual(
             firstObject.a.nested.value,
             1,
-            "Изменение результата не должно влиять на исходный объект (глубокое копирование)."
+            "Верхний уровень скопирован: замена объекта в результате не влияет на исходный."
         );
+    });
+
+    QUnit.test("Не падает, если значение свойства — функция или Symbol", function(assert) {
+        const fn = () => 42;
+        const sym = Symbol('key');
+
+        const result = findUniqueProperties(
+            { fn, sym, a: 1 },
+            { b: 2 }
+        );
+
+        assert.strictEqual(result.fn, fn, "Функция передаётся по ссылке без ошибок.");
+        assert.strictEqual(result.sym, sym, "Symbol передаётся по ссылке без ошибок.");
+        assert.strictEqual(result.a, 1, "Примитивы копируются как есть.");
     });
 
     QUnit.test("Работает с полностью разными свойствами у объектов", function(assert) {

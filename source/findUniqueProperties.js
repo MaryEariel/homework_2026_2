@@ -1,23 +1,44 @@
 'use strict';
 
 /**
- * Проверяет, является ли значение обычным объектом
- * (не null, не массив, не примитив).
+ * Проверяет, является ли значение обычным объектом:
+ * не null, не массив, не Set/Map/Date/RegExp и т.п.
  *
  * @param {*} value - проверяемое значение.
  * @returns {boolean} true, если значение — обычный объект.
  */
-const isPlainObject = (value) =>
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value);
+const isPlainObject = (value) => {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    const proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+};
+
+/**
+ * Делает поверхностную копию значения, если это объект или массив.
+ * Примитивы, функции и Symbol возвращает как есть.
+ *
+ * @param {*} value - копируемое значение.
+ * @returns {*} поверхностная копия объекта/массива или исходное значение.
+ */
+const shallowCopy = (value) => {
+    if (Array.isArray(value)) {
+        return value.slice();
+    }
+    if (value !== null && typeof value === 'object') {
+        return { ...value };
+    }
+    return value;
+};
 
 /**
  * Возвращает новый объект, содержащий только те свойства,
  * которые присутствуют в одном из двух объектов, но отсутствуют в другом.
  *
- * Значения свойств глубоко копируются, чтобы результат не делил
- * ссылки на вложенные объекты с исходными аргументами.
+ * Значения свойств-объектов и массивов поверхностно копируются,
+ * чтобы результат не делил ссылки с исходными аргументами.
+ * Глубокое копирование остаётся на ответственности вызывающего кода.
  *
  * @param {Object} firstObject - первый объект для сравнения.
  * @param {Object} secondObject - второй объект для сравнения.
@@ -36,14 +57,14 @@ const findUniqueProperties = (firstObject, secondObject) => {
     const result = {};
 
     Object.keys(firstObject).forEach((key) => {
-        if (!Object.prototype.hasOwnProperty.call(secondObject, key)) {
-            result[key] = structuredClone(firstObject[key]);
+        if (!Object.hasOwn(secondObject, key)) {
+            result[key] = shallowCopy(firstObject[key]);
         }
     });
 
     Object.keys(secondObject).forEach((key) => {
-        if (!Object.prototype.hasOwnProperty.call(firstObject, key)) {
-            result[key] = structuredClone(secondObject[key]);
+        if (!Object.hasOwn(firstObject, key)) {
+            result[key] = shallowCopy(secondObject[key]);
         }
     });
 
