@@ -134,6 +134,10 @@ QUnit.module("Тестируем функцию findUniqueProperties", function(
     });
 
     QUnit.test("Не падает, если значение свойства — функция или Symbol", function(assert) {
+        /**
+         * Тестовая функция, возвращает 42.
+         * @returns {number} всегда 42.
+         */
         const fn = () => 42;
         const sym = Symbol('key');
 
